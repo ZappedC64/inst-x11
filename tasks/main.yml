@@ -1,0 +1,110 @@
+---
+# These steps are documented on the Red Hat site at:
+# https://access.redhat.com/solutions/1117863
+
+- name: Install X11 components
+  ansible.builtin.dnf:
+    name:
+      - xorg-x11-xauth
+      - xorg-x11-fonts-*
+      - xorg-x11-utils
+      - dbus-x11
+      - xterm
+    state: present
+  tags:
+    - install
+    - never
+
+- name: Remove X11 components
+  ansible.builtin.dnf:
+    name:
+      - xorg-x11-xauth
+      - xorg-x11-fonts-*
+      - xorg-x11-utils
+      - dbus-x11
+      - xterm
+    state: absent
+  tags:
+    - remove
+    - never
+
+- name: Find all configuration files in sshd_config.d
+  ansible.builtin.find:
+    paths: /etc/ssh/sshd_config.d
+    pattern: "*.conf"
+    file_type: file
+  register: sshd_conf_files
+  tags:
+    - install
+    - remove
+    - never
+
+- name: Update X11 forwarding settings in each file found in sshd_config.d
+  ansible.builtin.lineinfile:
+    path: "{{ item.0.path }}"
+    regexp: "{{ item.1.regexp }}"
+    line: "{{ item.1.line }}"
+    state: present
+  loop: "{{ sshd_conf_files.files | product(config_lines) | list }}"
+  vars:
+    config_lines:
+      - { regexp: '^#?X11Forwarding', line: 'X11Forwarding yes' }
+      - { regexp: '^#?X11UseLocalhost', line: 'X11UseLocalhost yes' }
+      - { regexp: '^#?X11DisplayOffset', line: 'X11DisplayOffset 10' }
+      - { regexp: '^#?AllowTcpForwarding', line: 'AllowTcpForwarding yes' }
+  notify: restart sshd
+  tags:
+    - install
+    - never
+
+- name: Comment out X11 forwarding settings in each file found in sshd_config.d
+  ansible.builtin.lineinfile:
+    path: "{{ item.0.path }}"
+    regexp: "^({{ item.1.regexp }})"
+    line: "#\\1"
+    state: present
+    backrefs: yes
+  loop: "{{ sshd_conf_files.files | product(config_lines) | list }}"
+  vars:
+    config_lines:
+      - { regexp: '^#?X11Forwarding.*$' }
+      - { regexp: '^#?X11UseLocalhost.*$' }
+      - { regexp: '^#?X11DisplayOffset.*$' }
+      - { regexp: '^#?AllowTcpForwarding.*$' }
+  notify: restart sshd
+  tags:
+    - remove
+    - never
+
+- name: Update X11 forwarding settings in the main sshd_config file
+  ansible.builtin.lineinfile:
+    path: "/etc/ssh/sshd_config"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: '^#?X11Forwarding', line: 'X11Forwarding yes' }
+    - { regexp: '^#?X11UseLocalhost', line: 'X11UseLocalhost yes' }
+    - { regexp: '^#?X11DisplayOffset', line: 'X11DisplayOffset 10' }
+    - { regexp: '^#?AllowTcpForwarding', line: 'AllowTcpForwarding yes' }
+  notify: restart sshd
+  tags:
+    - install
+    - never
+
+- name: Comment out X11 forwarding settings in the main sshd_config file
+  ansible.builtin.lineinfile:
+    path: "/etc/ssh/sshd_config"
+    regexp: "^({{ item.regexp }})"
+    line: "#\\1"
+    state: present
+    backrefs: yes
+  loop:
+    - { regexp: '^#?X11Forwarding.*$' }
+    - { regexp: '^#?X11UseLocalhost.*$' }
+    - { regexp: '^#?X11DisplayOffset.*$' }
+    - { regexp: '^#?AllowTcpForwarding.*$' }
+  notify: restart sshd
+  tags:
+    - remove
+    - never
