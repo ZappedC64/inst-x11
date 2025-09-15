@@ -12,7 +12,18 @@ Open ports for X11 communication on your firewalls.
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+I used tags to provide an install and remove functionality. Quite frequently I need to temporarily setup X11 for the Oracle DBAs so that they can install Oracle or some Oracle product. This role makes it easy to install and remove the X11 components.
+
+I did put "- never" on all of the tasks so that we can't accidentally modify a server. If you leave off the 'install' or 'remove' tag, the role won't make any changes to the server.
+
+Tags:
+ install
+ remove
+ never
+
+To-Do
+-----
+Add Ubuntu and other Linux variants to the X11 installer.  My immediate need is for Red Hat, so I had to focus on that.
 
 Dependencies
 ------------
@@ -21,8 +32,6 @@ None.
 
 Example Playbook
 ----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
 ---
 - name: Install X11
