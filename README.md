@@ -6,7 +6,7 @@ This Ansible role installs the necessary components on Red Hat to allow X11 forw
 Requirements
 ------------
 
-Access to repository to installing packages.
+Access to repository for installing packages.
 Open ports for X11 communication on your firewalls.
 
 Role Variables
